@@ -12,13 +12,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/google-map/google-map-elements.html">
 <link rel="import" href="../bower_components/geo-location/geo-location.html">
 <link rel="import" href="./legend-add-feature.html">
+<link rel="import" href="./legend-marker.html">
 
 <dom-module id="legend-map">
   <template>
     <style>
       :host {
         display: block;
-        padding: 10px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
       }
       .card {
         box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
@@ -29,34 +34,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: #757575;
       }
       google-map {
-        height: 580px;
+        height: 100%;
       }
 
       legend-add-feature {
         position: absolute;
         z-index: 9999;
         left: 10px;
-        bottom: 42px;
+        bottom: 56px;
       }
     </style>
 
     <google-map id="legend_map"
       api-key="AIzaSyAcn7UuxRqiehxhxhF-Cz5qCeA8Q8thGWc"
-      latitude="[[latitude]]" longitude="[[longitude]]" map-type="satellite" zoom="17"
+      latitude="[[position.coords.latitude]]" longitude="[[position.coords.longitude]]" map-type="satellite" zoom="17"
       additional-map-options='{"mapTypeControl": false, "draggable": false, "streetViewControl": false}'>
   
-      <google-map-marker latitude="[[latitude]]" longitude="[[longitude]]"></google-map-marker>
+      <!-- <google-map-marker latitude="[[position.coords.latitude]]" longitude="[[position.coords.longitude]]"></google-map-marker> -->
 
       <legend-add-feature
-        locations="{{locations}}"
-        latitude="[[latitude]]"
-        longitude="[[longitude]]">
+        waypoints="{{waypoints}}"
+        position="[[position]]"
+        on-waypoints-changed="updateMapMarkers">
       </legend-add-feature>
     </google-map>
 
-    <geo-location 
-      latitude="{{latitude}}" longitude="{{longitude}}" 
-      watch-pos high-accuracy>
+    <geo-location position="{{position}}" maximum-age="5000" watch-pos high-accuracy>
     </geo-location>
   </template>
 
@@ -64,32 +67,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     Polymer({
       is: 'legend-map',
       properties: {
-        latitude: {
-          type: Number,
-          value: 42.3601
-        },
-        longitude: {
-          type: Number,
-          value: -71.0589
-        },
-        locations: {
-          type: Object,
-          observer: "updateMapMarkers"
-        }
+        position: Object,
+        waypoints: Array,
+        markerTimeout: Number
       },
-      updateMapMarkers(locations) {
-        this.$.legend_map.clear();
-        
-        locations.forEach((function(d) {
-          var marker = document.createElement('google-map-marker');
-          marker.setAttribute('latitude', d.latitude);
-          marker.setAttribute('longitude', d.longitude);
-          // marker.setAttribute('title', "");
-          // marker.innerHTML = "Dynamic Marker added from JS";
-          Polymer.dom(this.$.legend_map).appendChild(marker);
-        }).bind(this));
+      updateMapMarkers(events, waypoints) {
+        if(!this.waypoints) return;
 
-        this.$.legend_map._updateMarkers()
+        function generateMarker(position) {
+          var legendMarker = document.createElement('legend-marker');
+          legendMarker.position = position;
+          return legendMarker;
+        }
+
+        function createMarkers() {
+          this.$.legend_map.clear();
+
+          this.waypoints.forEach((function(position) {
+            Polymer.dom(this.$.legend_map).appendChild(generateMarker(position));
+          }).bind(this));
+
+          this.$.legend_map._updateMarkers()
+        }
+
+        clearTimeout(this.markerTimeout);
+        this.markerTimeout = setTimeout(createMarkers.bind(this), 500);
       }
     });
   </script>

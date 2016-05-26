@@ -2,6 +2,7 @@
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/firebase-element/firebase-collection.html">
+<link rel="import" href="../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
 
 <dom-module id="legend-add-feature">
   <template>
@@ -14,27 +15,24 @@
     <paper-fab 
       on-down="startLongPress"
       on-up="endLongPress"
-      on-tap="grabFeature"
+      on-tap="grabFeatureOrStop"
       icon="[[fabIcon]]"></paper-fab>
 
     <firebase-collection id="waypoints"
       location="https://legend-2ab75.firebaseio.com/waypoints"
-      on-firebase-value="_firebaseLoaded"
       data="{{waypoints}}"></firebase-collection>
+    <app-localstorage-document key="waypoints" data="[[waypoints]]"></app-localstorage-document>
   </template>
 
   <script>
     Polymer({
       is: 'legend-add-feature',
       properties: {
-        locations: {
-          type: Object,
+        position: Object,
+        waypoints: {
+          type: Array,
           notify: true,
           reflectToAttribute: true
-        },
-        waypoints: {
-          type: Object,
-          notify: true
         },
         pressTimeout: Number,
         isRecording: {
@@ -47,12 +45,8 @@
           value: "icons:add"
         }
       },
-      _firebaseLoaded: function(x) {
-        this.locations = this.waypoints;
-        console.log(this.locations);
-      },
       ready: function() {
-        setInterval(this.recordPointIfRecordingEnabled.bind(this), 1000);
+        setInterval(this.recordPointIfRecordingEnabled.bind(this), 3000);
       },
       recordPointIfRecordingEnabled: function() {
         this.isRecording && this.addNewWaypoint();
@@ -63,7 +57,7 @@
       endLongPress: function() {
         clearTimeout(this.pressTimeout);
       },
-      grabFeature: function() {
+      grabFeatureOrStop: function() {
         if(this.isRecording) {
           this.stopRecording();
           return;
@@ -81,8 +75,13 @@
       },
       addNewWaypoint() {
         this.$.waypoints.add({
-          latitude: this.latitude,
-          longitude: this.longitude
+          latitude: this.position.coords.latitude,
+          longitude: this.position.coords.longitude,
+          accuracy: this.position.coords.accuracy,
+          altitudeAccuracy: this.position.coords.altitudeAccuracy,
+          heading: this.position.coords.heading,
+          speed: this.position.coords.speed,
+          timestamp: this.position.timestamp
         });
       }
     });

@@ -1,0 +1,47 @@
+<!--
+A comment describing this element
+
+Example:
+
+    <my-elem></my-elem>
+
+Example:
+
+    <my-elem>
+      <h2>Hello my-elem</h2>
+    </my-elem>
+
+@demo demo/index.html
+-->
+
+<link rel="import" href="../bower_components/google-map/google-map-elements.html">
+
+<dom-module id="legend-marker">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    
+    <google-map-marker
+      latitude="[[latitude]]"
+      longitude="[[longitude]]">
+      <a href="#"">Edit</a> | <a href="#">Delete</a>
+    </google-map-marker>
+
+  </template>
+  <script>
+    Polymer({
+      is: 'legend-marker',
+      properties: {
+        position: Object,
+        latitude: Number,
+        longitude: Number
+      },
+      ready: function() {
+        console.log(this.position);
+      }
+    });
+  </script>
+</dom-module>
